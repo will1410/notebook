@@ -2111,8 +2111,12 @@ GROUP BY
 
 Now we have a report that looks like this:
 
-![Screenshot - step 10](..images/1000.png)
+![Screenshot - step 10](../images/1000.png)
 
+
+<img src="markdownmonstericon.png"
+     alt="Markdown Monster icon"
+     style="float: left; margin-right: 10px;" />
 
 
 

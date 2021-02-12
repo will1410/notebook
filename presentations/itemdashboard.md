@@ -2114,14 +2114,464 @@ Now we have a report that looks like this:
 ![Screenshot - step 10](../images/1000.png)
 
 
-<img src="markdownmonstericon.png"
-     alt="Markdown Monster icon"
-     style="float: left; margin-right: 10px;" />
+## Step 11
+
+Next I want to add a couple of additional line breaks to divide the parts of the output into sections.
+
+{% highlight SQL linenos %}
+
+SELECT
+  CONCAT_WS("<br />",
+    Concat("Home library: ", items.homebranch),
+    Concat("Current library: ", items.holdingbranch),
+    Concat("Permanent location: ", permanent_locss.lib),
+    Concat("Current location: ", locss.lib),
+    Concat("Item type: ", itemtypess.description),
+    Concat("Collection code: ", ccodes.lib),
+    Concat("Call number: ", items.itemcallnumber),
+    Concat("Author: ", biblio.author),
+    Concat("Title: ",
+      Concat_Ws(' ',
+        biblio.title, ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="h"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="b"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="n"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="p"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="c"]')
+      )
+    ),
+    Concat("Item barcode: ", items.barcode),
+    Concat("Public notes: ", items.itemnotes),
+    Concat("Non-public notes: ", items.itemnotes_nonpublic),
+
+
+/* Adding the "<br />" before the label adds a line break before these lines */
+
+    Concat("<br />Checkouts: ", items.issues),
+    Concat("Renewals: ", items.renewals),
+    Concat("Date added: ", items.dateaccessioned),
+    Concat("Last borrowed: ", items.datelastborrowed),
+    Concat("Last seen: ", items.datelastseen),
+    Concat("Item record last modified: ", items.timestamp),
+    Concat("Due date: ", issuesi.date_due),
+    Concat("Not for loan status: ", notforloans.lib),
+    Concat("Damaged: ", Concat(damageds.lib, ' ', items.damaged_on)),
+    Concat("Lost: ", Concat(losts.lib, ' ', items.itemlost_on)),
+    Concat("Withdrawn: ", Concat(withdrawns.lib, ' ', items.withdrawn_on)),
+    Concat(
+      "In transit from: ",
+      If(
+        transfersi.frombranch IS NULL,
+        "-",
+        Concat(transfersi.frombranch, " to ", transfersi.tobranch, " since ", transfersi.datesent)
+      )
+    ),
+
+
+/* Adding the "<br />" before the label adds a line break before these lines */
+
+    Concat(
+      "<br />Link to borrower: ",
+      If(
+        issuesi.date_due IS NULL,
+        "-",
+        Concat(
+          "<a href='/cgi-bin/koha/circ/circulation.pl?borrowernumber=",  
+          issuesi.borrowernumber,
+          "' target='_blank'>go to the borrower's account</a>"
+        )
+      )
+    ),
+    Concat(
+      "Link to title: ",
+      Concat(
+        "<a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+        biblio.biblionumber,
+        "' target='_blank'>go to the bibliographic record</a>"
+      )
+    ),
+    Concat(
+      "Link to item: ",
+      Concat(
+        "<a href='/cgi-bin/koha/catalogue/moredetail.pl?itemnumber=",
+        items.itemnumber,
+        "&biblionumber=",
+        biblio.biblionumber,
+        "' target='_blank'>go to the item record</a>"
+      )
+    ),
+
+
+/* Adding the "<br />" before the label adds a line break before these lines */
+
+    Concat(
+      "<br />Item circ history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=2785&phase=Run+this+report&param_name=Enter+item+barcode+number&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item circ history</a>"
+      )
+    ),
+    Concat(
+      "Item action log history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3342&phase=Run+this+report&param_name=Enter+item+number&sql_params=",
+        items.itemnumber,
+        "' target='_blank'>see action log history</a>"
+      )
+    ),     
+    Concat(
+      "Item in transit history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=2784&phase=Run+this+report&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item transit history</a>"
+      )
+    ),
+    Concat(
+      "Request history on this title: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3039&phase=Run+this+report&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=",
+        biblio.biblionumber,
+        "&sql_params=%25' target='_blank'>see title's request history</a>"
+      )
+    ),
+    Concat(
+      "Request history on this item: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3039&phase=Run+this+report&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item's request history</a>"
+      )
+    )
+  ) AS INFO
+FROM
+  items JOIN
+  biblio ON items.biblionumber = biblio.biblionumber LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = items.permanent_location LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      items.location LEFT JOIN
+  (SELECT
+     itemtypes.itemtype,
+     itemtypes.description
+   FROM
+     itemtypes) itemtypess ON itemtypess.itemtype = items.itype LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      items.ccode LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = items.notforloan LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = items.damaged LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      items.itemlost LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = items.withdrawn INNER JOIN
+  biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
+  LEFT JOIN
+  (SELECT
+     issues.itemnumber,
+     issues.date_due,
+     issues.borrowernumber
+   FROM
+     issues) issuesi ON issuesi.itemnumber = items.itemnumber LEFT JOIN
+  (SELECT
+     branchtransfers.itemnumber,
+     branchtransfers.frombranch,
+     branchtransfers.datesent,
+     branchtransfers.tobranch,
+     branchtransfers.datearrived
+   FROM
+     branchtransfers
+   WHERE
+     branchtransfers.datearrived IS NULL) transfersi ON transfersi.itemnumber =
+      items.itemnumber
+WHERE
+  items.barcode LIKE Concat('%', <<Enter item barcode 0003008200544>>, '%')
+GROUP BY
+  items.itemnumber,
+  biblio.biblionumber
+
+{% endhighlight %}
+
+Now we have a report that looks like this:
+
+![Screenshot - step 11](../images/1000.png)
 
 
 
+## Step 12
+
+And since I know that any items that this query will return will be items that are currently in the catalog, I'm going to concatenate in a header and a footer in the table that will make it easy for staff to recognize that this is a current item.
+
+SELECT
+  CONCAT_WS("<br />",
+
+  /* This HTML will add a heading making it clear the item is active in the system */
+
+    '<h3 style="color: white; background-color: #829356; text-align: center;">This item is currently in the catalog</h3>',
 
 
+    Concat("Home library: ", items.homebranch),
+    Concat("Current library: ", items.holdingbranch),
+    Concat("Permanent location: ", permanent_locss.lib),
+    Concat("Current location: ", locss.lib),
+    Concat("Item type: ", itemtypess.description),
+    Concat("Collection code: ", ccodes.lib),
+    Concat("Call number: ", items.itemcallnumber),
+    Concat("Author: ", biblio.author),
+    Concat("Title: ",
+      Concat_Ws(' ',
+        biblio.title, ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="h"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="b"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="n"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="p"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="c"]')
+      )
+    ),
+    Concat("Item barcode: ", items.barcode),
+    Concat("Public notes: ", items.itemnotes),
+    Concat("Non-public notes: ", items.itemnotes_nonpublic),
+    Concat("<br />Checkouts: ", items.issues),
+    Concat("Renewals: ", items.renewals),
+    Concat("Date added: ", items.dateaccessioned),
+    Concat("Last borrowed: ", items.datelastborrowed),
+    Concat("Last seen: ", items.datelastseen),
+    Concat("Item record last modified: ", items.timestamp),
+    Concat("Due date: ", issuesi.date_due),
+    Concat("Not for loan status: ", notforloans.lib),
+    Concat("Damaged: ", Concat(damageds.lib, ' ', items.damaged_on)),
+    Concat("Lost: ", Concat(losts.lib, ' ', items.itemlost_on)),
+    Concat("Withdrawn: ", Concat(withdrawns.lib, ' ', items.withdrawn_on)),
+    Concat(
+      "In transit from: ",
+      If(
+        transfersi.frombranch IS NULL,
+        "-",
+        Concat(transfersi.frombranch, " to ", transfersi.tobranch, " since ", transfersi.datesent)
+      )
+    ),
+    Concat(
+      "<br />Link to borrower: ",
+      If(
+        issuesi.date_due IS NULL,
+        "-",
+        Concat(
+          "<a href='/cgi-bin/koha/circ/circulation.pl?borrowernumber=",  
+          issuesi.borrowernumber,
+          "' target='_blank'>go to the borrower's account</a>"
+        )
+      )
+    ),
+    Concat(
+      "Link to title: ",
+      Concat(
+        "<a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+        biblio.biblionumber,
+        "' target='_blank'>go to the bibliographic record</a>"
+      )
+    ),
+    Concat(
+      "Link to item: ",
+      Concat(
+        "<a href='/cgi-bin/koha/catalogue/moredetail.pl?itemnumber=",
+        items.itemnumber,
+        "&biblionumber=",
+        biblio.biblionumber,
+        "' target='_blank'>go to the item record</a>"
+      )
+    ),
+    Concat(
+      "<br />Item circ history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=2785&phase=Run+this+report&param_name=Enter+item+barcode+number&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item circ history</a>"
+      )
+    ),
+    Concat(
+      "Item action log history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3342&phase=Run+this+report&param_name=Enter+item+number&sql_params=",
+        items.itemnumber,
+        "' target='_blank'>see action log history</a>"
+      )
+    ),     
+    Concat(
+      "Item in transit history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=2784&phase=Run+this+report&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item transit history</a>"
+      )
+    ),
+    Concat(
+      "Request history on this title: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3039&phase=Run+this+report&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=",
+        biblio.biblionumber,
+        "&sql_params=%25' target='_blank'>see title's request history</a>"
+      )
+    ),
+    Concat(
+      "Request history on this item: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3039&phase=Run+this+report&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item's request history</a>"
+      )
+    ),
+
+    /* This HTML will add a heading making it clear the item is active in the system */
+
+    '<br /><h3 style="color: white; background-color: #829356; text-align: center;">This item is currently in the catalog</h3>'
+
+  ) AS INFO
+FROM
+  items JOIN
+  biblio ON items.biblionumber = biblio.biblionumber LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = items.permanent_location LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      items.location LEFT JOIN
+  (SELECT
+     itemtypes.itemtype,
+     itemtypes.description
+   FROM
+     itemtypes) itemtypess ON itemtypess.itemtype = items.itype LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      items.ccode LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = items.notforloan LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = items.damaged LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      items.itemlost LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = items.withdrawn INNER JOIN
+  biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
+  LEFT JOIN
+  (SELECT
+     issues.itemnumber,
+     issues.date_due,
+     issues.borrowernumber
+   FROM
+     issues) issuesi ON issuesi.itemnumber = items.itemnumber LEFT JOIN
+  (SELECT
+     branchtransfers.itemnumber,
+     branchtransfers.frombranch,
+     branchtransfers.datesent,
+     branchtransfers.tobranch,
+     branchtransfers.datearrived
+   FROM
+     branchtransfers
+   WHERE
+     branchtransfers.datearrived IS NULL) transfersi ON transfersi.itemnumber =
+      items.itemnumber
+WHERE
+  items.barcode LIKE Concat('%', <<Enter item barcode 0003008200544>>, '%')
+GROUP BY
+  items.itemnumber,
+  biblio.biblionumber
+
+{% endhighlight %}
 
 
 

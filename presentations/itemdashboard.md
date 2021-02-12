@@ -2469,7 +2469,7 @@ SELECT
       )
     ),
 
-    /* This HTML will add a heading making it clear the item is active in the system */
+    /* This HTML will add a footer making it clear the item is active in the system */
 
     '<br /><h3 style="color: white; background-color: #829356; text-align: center;">This item is currently in the catalog</h3>'
 

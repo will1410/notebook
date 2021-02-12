@@ -2112,8 +2112,6 @@ GROUP BY
 Now we have a report that looks like this:
 
 
-
-
 ## Step 11
 
 Next I want to add a couple of additional line breaks to divide the parts of the output into sections.
@@ -2344,8 +2342,6 @@ GROUP BY
 
 Now we have a report that looks like this:
 
-![Screenshot - step 11](../images/1100.png)
-
 
 
 ## Step 12
@@ -2573,7 +2569,6 @@ GROUP BY
 
 {% endhighlight %}
 
-![Screenshot - step 12](../images/1200.png)
 
 
 

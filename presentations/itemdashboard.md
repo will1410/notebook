@@ -4116,6 +4116,7 @@ It's a report that took a long time to create.  Like any truly lazy person, the 
 I have the report saved on my bookmarks toolbar so that when I do get a call saying "Tell me about this book?" I can just click on that bookmark and usually get them an answer in a moment or two.
 
 
+-----
 This work is licensed under a
 [Creative Commons Attribution-ShareAlike 4.0 International License][cc-by-sa].
 

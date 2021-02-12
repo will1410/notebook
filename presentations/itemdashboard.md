@@ -2348,6 +2348,8 @@ Now we have a report that looks like this:
 
 And since I know that any items that this query will return will be items that are currently in the catalog, I'm going to concatenate in a header and a footer in the table that will make it easy for staff to recognize that this is a current item.
 
+{% highlight SQL linenos %}
+
 SELECT
   CONCAT_WS("<br />",
 

@@ -2111,7 +2111,7 @@ GROUP BY
 
 Now we have a report that looks like this:
 
-![Screenshot - step 10](../images/1000.png)
+
 
 
 ## Step 11

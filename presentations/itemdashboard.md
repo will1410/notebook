@@ -199,7 +199,7 @@ FROM
      authorised_values
    WHERE
      authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -1072,7 +1072,7 @@ FROM
       authorised_values
     WHERE
       authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
 
 /* Links items to the issues table so we can get current borrower information if the item is checked out */
@@ -1235,7 +1235,7 @@ FROM
       authorised_values
     WHERE
       authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -1397,7 +1397,7 @@ FROM
       authorised_values
     WHERE
       authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -1664,7 +1664,7 @@ FROM
       authorised_values
     WHERE
       authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -1885,7 +1885,7 @@ FROM
      authorised_values
    WHERE
      authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -2106,7 +2106,7 @@ FROM
      authorised_values
    WHERE
      authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -2338,7 +2338,7 @@ FROM
      authorised_values
    WHERE
      authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -2569,7 +2569,7 @@ FROM
      authorised_values
    WHERE
      authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -3899,7 +3899,7 @@ FROM
      authorised_values
    WHERE
      authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT

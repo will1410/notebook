@@ -2573,7 +2573,7 @@ GROUP BY
 
 {% endhighlight %}
 
-
+![Screenshot - step 12](../images/1200.png)
 
 
 

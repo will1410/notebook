@@ -2109,7 +2109,9 @@ GROUP BY
 
 {% endhighlight %}
 
-Now we have a report that
+Now we have a report that looks like this:
+
+![Screenshot - step 10](..images/1000.png)
 
 
 

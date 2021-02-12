@@ -3017,7 +3017,7 @@ SELECT
   deleteditems.itemnumber,
   Concat(damageds.lib, ' ', deleteditems.damaged_on) AS DAMAGED,
   Concat(losts.lib, ' ', deleteditems.itemlost_on) AS LOST,
-  Concat(withdrawns.lib, ' ', deleteditems.withdrawn_on) AS WITHDRAWN
+  Concat(withdrawns.lib, ' ', deleteditems.withdrawn_on) AS WITHDRAWN,
 
 
 /* This section uses an if/then statement to display a message if the biblio has been deleted or a link to the biblio record if it has not */

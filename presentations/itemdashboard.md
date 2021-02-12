@@ -2111,6 +2111,7 @@ GROUP BY
 
 Now we have a report that looks like this:
 
+![Screenshot - step 10 results](../images/1000.png)
 
 ## Step 11
 
@@ -2342,7 +2343,7 @@ GROUP BY
 
 Now we have a report that looks like this:
 
-
+![Screenshot - step 11 results](../images/1100.png)
 
 ## Step 12
 
@@ -2571,7 +2572,9 @@ GROUP BY
 
 {% endhighlight %}
 
+This half of the report now looks like this:
 
+![Screenshot - step 12 results](../images/1200.png)
 
 
 

@@ -2767,7 +2767,7 @@ This SQL gets all of the data I might need from the deleted items table - but th
 
 To speed things up, I'm going to show this SQL at a point where I'm already getting the locations, item type descriptions, collection code information, and status information as descriptions instead of codes.  I'm also already combining the statuses and their dates where applicable.  I'm also dropping a few fields I don't need like "deleteditems.onloan."
 
-{% highligh-t SQL linenos %}
+{% highlight SQL linenos %}
 
 SELECT
   deleteditems.homebranch,
@@ -3000,7 +3000,7 @@ The page I do want to link out to link out to is the bibliographic record (if it
 That report is Item circ history: 3009 - <a href="https://github.com/northeast-kansas-library-system/nextkansas.sql/blob/master/R.003009.sql" target="_blank">Click here for report 2785</a>
 
 
-{% highlig-ht SQL linenos %}
+{% highlight SQL linenos %}
 
 SELECT
   deleteditems.homebranch,
@@ -3152,7 +3152,7 @@ GROUP BY
 
 And at this point I'm going to add all of the labels into the deleted items data.  Another thing you may notice, though, is that I've dropped the process of getting the 245$b, $p, $n, etc.  It is possible to get that data, but because you're looking in two different sets of tables, it's more complicated and not worth the effort for what I wanted to accomplish with deleted items.
 
-{% highligh-t SQL linenos %}
+{% highlight SQL linenos %}
 
 SELECT
   Concat('Home library: ', deleteditems.homebranch),
@@ -3713,7 +3713,7 @@ At this point we now have two working reports.  One that will take an active ite
 
 If you don't know how to use "union", please check out the video: <a href="https://youtu.be/FJTFMaga-PU" target="_blank">SQL - Unions</a>
 
-{% highlight -SQL linenos %}
+{% highlight SQL linenos %}
 
 SELECT
   CONCAT_WS("<br />",

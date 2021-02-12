@@ -1422,11 +1422,11 @@ Concat("Link to borrower: ",
 
 Next I'm going to add in links with labels to other reports.  The important thing here is to have the reports on your system and to update the report numbers from what I have in my system to what you have in your system.  The reports I'm using are:
 
-- Item circ history: 2785 - <a href="" target="_blank">Click here for report 2785</a>
-- Item action log history: 3342 - <a href="" target="_blank">Click here for report 3342</a>
-- Item in transit history: 2784 - <a href="" target="_blank">Click here for report 2784</a>
-- Request history on this title: 3039 - <a href="" target="_blank">Click here for report 3039</a>
-- Request history on this item: 3039 - <a href="" target="_blank">Click here for report 3039</a>
+- Item circ history: 2785 - <a href="https://github.com/northeast-kansas-library-system/nextkansas.sql/blob/master/R.002785.sql" target="_blank">Click here for report 2785</a>
+- Item action log history: 3342 - <a href="https://github.com/northeast-kansas-library-system/nextkansas.sql/blob/master/R.003342.sql" target="_blank">Click here for report 3342</a>
+- Item in transit history: 2784 - <a href="https://github.com/northeast-kansas-library-system/nextkansas.sql/blob/master/R.002784.sql" target="_blank">Click here for report 2784</a>
+- Request history on this title: 3039 - <a href="https://github.com/northeast-kansas-library-system/nextkansas.sql/blob/master/R.003039.sql" target="_blank">Click here for report 3039</a>
+- Request history on this item: 3039 - <a href="https://github.com/northeast-kansas-library-system/nextkansas.sql/blob/master/R.003039.sql" target="_blank">Click here for report 3039</a>
 
 I realize here that koha-US doesn't have a video on how to link results from one report to another report.  It's actually just like creating any other link as described in the video on links or at <a href="https://wiki.koha-community.org/wiki/SQL_Reports_Library#Links" target="_blank">the Koha Wiki's SQL library.</a>  The difference is that the URL will start with "/cgi-bin/koha/reports/guided_reports.pl?reports=", followed by the report number, followed by the runtime parameters you might need for the report.
 

@@ -2576,6 +2576,20 @@ This half of the report now looks like this:
 
 ![Screenshot - step 12 results](../images/1200.png)
 
+## Intermission
+
+This half of the report is done.  I now have a report where I can enter an active item barcode number and I get a result that I can cut-and-paste into an e-mail and it quickly links to all of the reports that I may commonly need to run.
+
+The next step is to write a report that runs, more-or-less, the same report against the deleteditems table instead of the items table.
+
+I'm going to go through that in a lot fewer steps, though.
+
+## Step 13
+
+This SQL gets all of the data I might need from the deleted items table.
+
+
+
 
 
 

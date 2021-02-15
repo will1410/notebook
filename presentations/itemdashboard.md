@@ -2879,6 +2879,8 @@ Since I can only get biblio information from the last step if the bibliographic 
 
 If you don't know how to use coalesce, please check out the video: <a href="https://youtu.be/35UvrpcYFFA" target="_blank">SQL: Coalesce</a>
 
+<mark>In the koha-US video I mention that there's a problem with the SQL at this point and that I could not get the correct results from the deletedbiblios table.  This was an error.  The actual problem was that the item barcode number I was using for a deleted item with a deleted biblio was for an ILL item and it didn't have an author or a title in the record.  I was expecting a title and an author from a title that didn't have either.</mark>
+
 {% highlight SQL linenos %}
 
 SELECT

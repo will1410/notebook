@@ -16,362 +16,387 @@ The SQL for this report is kind of a lot:
 {% highlight SQL linenos %}
 
 SELECT
-  Concat_Ws('<br />',
-  '<h3 style="color: white; background-color: #829356; text-align: center;">This item is currently in the catalog</h3>',
-  Concat('Item homebranch: ', items.homebranch),
-  Concat('Current branch: ', items.holdingbranch),
-  Concat('Permanent shelving location: ', items.permanent_location),
-  Concat('Current shelving location: ', items.location),
-  Concat('Item type: ', items.itype),
-  Concat('Collection code: ', ccodes.lib),
-  Concat('Call#: ', items.itemcallnumber),
-  Concat('Author: ', biblio.author),
-  Concat('Title: ',
-  Concat_Ws(' ',
-    '<span style="text-transform: uppercase">',
-    biblio.title,
-    ExtractValue(biblio_metadata.metadata, '//datafield[@tag="245"]/subfield[@code="b"]'),
-    ExtractValue(biblio_metadata.metadata, '//datafield[@tag="245"]/subfield[@code="p"]'),
-    ExtractValue(biblio_metadata.metadata, '//datafield[@tag="245"]/subfield[@code="n"]'),
-    '</span>')
-  ),
-  Concat('Item barcode: ', Upper(items.barcode)),
-  Concat('<br />Public notes: ', items.itemnotes),
-  Concat('Non-public notes: ', items.itemnotes_nonpublic),
-  Concat('<br />Total circulation: ', (Sum((Coalesce(items.issues, 0)) + (Coalesce(items.renewals, 0))))),
-  Concat('(', items.issues, ' checkouts + ', items.renewals, ' renewals)'),
-  Concat('<br />Date added: ', items.dateaccessioned),
-  Concat('Last borrowed: ', items.datelastborrowed),
-  Concat('Last seen: ', items.datelastseen),
-  Concat('Item record last modified: ', items.timestamp),
-  Concat('<br />Due date: ', If(issuesi.date_due IS NULL, "-", Date_Format(issuesi.date_due, "%Y.%m.%d"))),
-  Concat("Not for loan status: ", If(items.notforloan = 0, "-", If(items.notforloan IS NULL, "-", nfl.lib))),
-  Concat("Damaged status: ", If(items.damaged = 0, "-", If(items.damaged IS NULL, "-", damagedi.lib))),
-  Concat(
-    "Lost status: ",
-    If(
-      items.itemlost = 0,
-      "-",
-      If(items.itemlost IS NULL, "-", Concat(losti.lib, " on ", items.itemlost_on))
-    )
-  ),
-  Concat(
-    "Withdrawn status: ",
-    If(
-      items.withdrawn = 0,
-      "-",
-      If(items.withdrawn IS NULL, "- ", Concat(withdrawni.lib, " on ", items.withdrawn_on))
-    )
-  ),
-  Concat(
-    "<br /> In transit from ",
-    If(
-      transfersi.frombranch IS NULL,
-      "-",
-      Concat(transfersi.frombranch, " to ", transfersi.tobranch, " since ", transfersi.datesent)
-    )
-  ),
-  Concat(
-    "<br />Link to borrower: ",
-    If(
-      issuesi.date_due IS NULL,
-      "-",
-      Concat(
-        "<a href='/cgi-bin/koha/circ/circulation.pl?borrowernumber=",
-        issuesi.borrowernumber,
-        "' target='_blank'>go to the borrower's account</a>"
+  CONCAT_WS("<br />",
+    '<h3 style="color: white; background-color: #829356; text-align: center;">This item is currently in the catalog</h3>',
+    Concat("Home library: ", items.homebranch),
+    Concat("Current library: ", items.holdingbranch),
+    Concat("Permanent location: ", permanent_locss.lib),
+    Concat("Current location: ", locss.lib),
+    Concat("Item type: ", itemtypess.description),
+    Concat("Collection code: ", ccodes.lib),
+    Concat("Call number: ", items.itemcallnumber),
+    Concat("Author: ", biblio.author),
+    Concat("Title: ",
+      Concat_Ws(' ',
+        biblio.title, ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="h"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="b"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="n"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="p"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="c"]')
       )
-  )
-  ),
-  Concat(
-    "Link to title: ",
+    ),
+    Concat("Item barcode: ", items.barcode),
+    Concat("Public notes: ", items.itemnotes),
+    Concat("Non-public notes: ", items.itemnotes_nonpublic),
+    Concat("<br />Checkouts: ", items.issues),
+    Concat("Renewals: ", items.renewals),
+    Concat("Date added: ", items.dateaccessioned),
+    Concat("Last borrowed: ", items.datelastborrowed),
+    Concat("Last seen: ", items.datelastseen),
+    Concat("Item record last modified: ", items.timestamp),
+    Concat("Due date: ", issuesi.date_due),
+    Concat("Not for loan status: ", notforloans.lib),
+    Concat("Damaged: ", Concat(damageds.lib, ' ', items.damaged_on)),
+    Concat("Lost: ", Concat(losts.lib, ' ', items.itemlost_on)),
+    Concat("Withdrawn: ", Concat(withdrawns.lib, ' ', items.withdrawn_on)),
     Concat(
-      "<a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
-      biblio.biblionumber,
-      "' target='_blank'>go to the bibliographic record</a>"
-    )
-  ),
-  Concat(
-    "Link to item: ",
+      "In transit from: ",
+      If(
+        transfersi.frombranch IS NULL,
+        "-",
+        Concat(transfersi.frombranch, " to ", transfersi.tobranch, " since ", transfersi.datesent)
+      )
+    ),
     Concat(
-      "<a href='/cgi-bin/koha/catalogue/moredetail.pl?itemnumber=",
-      items.itemnumber,
-      "&biblionumber=",
-      biblio.biblionumber,
-      "' target='_blank'>go to the item record</a>"
-    )
-  ),
-  Concat(
-    "Item circ history: ",
+      "<br />Link to borrower: ",
+      If(
+        issuesi.date_due IS NULL,
+        "-",
+        Concat(
+          "<a href='/cgi-bin/koha/circ/circulation.pl?borrowernumber=",  
+          issuesi.borrowernumber,
+          "' target='_blank'>go to the borrower's account</a>"
+        )
+      )
+    ),
     Concat(
-      "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=2785&phase=Run+this+report&param_name=Enter+item+barcode+number&sql_params=",
-      items.barcode,
-      "' target='_blank'>see item circ history</a>"
-    )
-  ),
-  Concat(
-    "Item action log history: ",
+      "Link to title: ",
+      Concat(
+        "<a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+        biblio.biblionumber,
+        "' target='_blank'>go to the bibliographic record</a>"
+      )
+    ),
     Concat(
-      "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3342&phase=Run+this+report&param_name=Enter+item+number&sql_params=",
-      items.itemnumber,
-      "' target='_blank'>see action log history</a>"
-    )
-  ),     
-  Concat(
-    "Item in transit history: ",
+      "Link to item: ",
+      Concat(
+        "<a href='/cgi-bin/koha/catalogue/moredetail.pl?itemnumber=",
+        items.itemnumber,
+        "&biblionumber=",
+        biblio.biblionumber,
+        "' target='_blank'>go to the item record</a>"
+      )
+    ),
     Concat(
-      "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=2784&phase=Run+this+report&sql_params=",
-      items.barcode,
-      "' target='_blank'>see item transit history</a>"
-    )
-  ),
-  Concat(
-    "Request history on this title: ",
+      "<br />Item circ history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=2785&phase=Run+this+report&param_name=Enter+item+barcode+number&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item circ history</a>"
+      )
+    ),
     Concat(
-      "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3039&phase=Run+this+report&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=",
-      biblio.biblionumber,
-      "&sql_params=%25' target='_blank'>see title's request history</a>"
-    )
-  ),
-  Concat(
-    "Request history on this item: ",
+      "Item action log history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3342&phase=Run+this+report&param_name=Enter+item+number&sql_params=",
+        items.itemnumber,
+        "' target='_blank'>see action log history</a>"
+      )
+    ),     
     Concat(
-      "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3039&phase=Run+this+report&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=",
-      items.barcode,
-      "' target='_blank'>see item's request history</a>"
-    )
-  ),
-  '<br /><h3 style="color: white; background-color: #829356; text-align: center;">This item is currently in the catalog<br />it has not been deleted</h3>'
+      "Item in transit history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=2784&phase=Run+this+report&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item transit history</a>"
+      )
+    ),
+    Concat(
+      "Request history on this title: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3039&phase=Run+this+report&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=",
+        biblio.biblionumber,
+        "&sql_params=%25' target='_blank'>see title's request history</a>"
+      )
+    ),
+    Concat(
+      "Request history on this item: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3039&phase=Run+this+report&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item's request history</a>"
+      )
+    ),
+    '<br /><h3 style="color: white; background-color: #829356; text-align: center;">This item is currently in the catalog</h3>'
   ) AS INFO
 FROM
-  items
-JOIN biblio
-  ON items.biblionumber = biblio.biblionumber
-JOIN biblio_metadata
-  ON biblio_metadata.biblionumber = biblio.biblionumber AND
-     items.biblionumber = biblio_metadata.biblionumber
-LEFT JOIN (
-    SELECT
-      authorised_values.category,
-      authorised_values.authorised_value,
-      authorised_values.lib
-    FROM
-      authorised_values
-    WHERE
-      authorised_values.category = 'CCODE'
-    ) ccodes
-  ON items.ccode = ccodes.authorised_value
-LEFT JOIN (
-    SELECT
-      authorised_values.category,
-      authorised_values.authorised_value,
-      authorised_values.lib
-    FROM
-      authorised_values
-    WHERE
-      authorised_values.category = 'NOT_LOAN'
-    ) nfl
-  ON items.notforloan = nfl.authorised_value
-LEFT JOIN (
-    SELECT
-      authorised_values.category,
-      authorised_values.authorised_value,
-      authorised_values.lib
-    FROM
-      authorised_values
-    WHERE
-      authorised_values.category = 'DAMAGED'
-    ) damagedi
-  ON items.damaged = damagedi.authorised_value
-LEFT JOIN (
-    SELECT
-      authorised_values.category,
-      authorised_values.authorised_value,
-      authorised_values.lib
-    FROM
-      authorised_values
-    WHERE
-      authorised_values.category = 'LOST'
-    ) losti
-  ON items.itemlost = losti.authorised_value
-LEFT JOIN (
-    SELECT
-      authorised_values.category,
-      authorised_values.authorised_value,
-      authorised_values.lib
-    FROM
-      authorised_values
-    WHERE
-      authorised_values.category = 'WITHDRAWN'
-    ) withdrawni
-  ON items.withdrawn = withdrawni.authorised_value
-LEFT JOIN (
-    SELECT
-      branchtransfers.itemnumber,
-      branchtransfers.frombranch,
-      branchtransfers.datesent,
-      branchtransfers.tobranch,
-      branchtransfers.datearrived
-    FROM
-      branchtransfers
-    WHERE
-      branchtransfers.datearrived IS NULL
-    ) transfersi
-  ON items.itemnumber = transfersi.itemnumber
-LEFT JOIN (
-    SELECT
-      issues.itemnumber,
-      issues.date_due,
-      issues.borrowernumber
-    FROM
-      issues
-    ) issuesi
-  ON items.itemnumber = issuesi.itemnumber
+  items JOIN
+  biblio ON items.biblionumber = biblio.biblionumber LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = items.permanent_location LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      items.location LEFT JOIN
+  (SELECT
+     itemtypes.itemtype,
+     itemtypes.description
+   FROM
+     itemtypes) itemtypess ON itemtypess.itemtype = items.itype LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      items.ccode LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = items.notforloan LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = items.damaged LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      items.itemlost LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = items.withdrawn JOIN
+  biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
+  LEFT JOIN
+  (SELECT
+     issues.itemnumber,
+     issues.date_due,
+     issues.borrowernumber
+   FROM
+     issues) issuesi ON issuesi.itemnumber = items.itemnumber LEFT JOIN
+  (SELECT
+     branchtransfers.itemnumber,
+     branchtransfers.frombranch,
+     branchtransfers.datesent,
+     branchtransfers.tobranch,
+     branchtransfers.datearrived
+   FROM
+     branchtransfers
+   WHERE
+     branchtransfers.datearrived IS NULL) transfersi ON transfersi.itemnumber =
+      items.itemnumber
 WHERE
-  items.barcode LIKE Concat("%", <<Enter barcode number>>, "%")
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
-  items.itemnumber
+  items.itemnumber,
+  biblio.biblionumber
 UNION
 SELECT
-  Concat_Ws('<br />',
-  '<h2 style="color: white; background-color: #AD2A1A; text-align: center;">This item has been deleted</h2>',
-  Concat(
-    'At the time of its deletion on:  <ins><strong>',
-    deleteditems.timestamp,
-    "<br /></strong></ins> this item's information was as follows:<br />"
-  ),
-  Concat('Item homebranch: ', deleteditems.homebranch),
-  Concat('Current branch: ', deleteditems.holdingbranch),
-  Concat('Permanent shelving location: ', deleteditems.permanent_location),
-  Concat('Current shelving location: ', deleteditems.location),
-  Concat('Item type: ', deleteditems.itype),
-  Concat('Collection code: ', ccodes.lib),
-  Concat('Call#: ', deleteditems.itemcallnumber),
-  Concat('Author: ', Coalesce(biblio.author, deletedbiblio.author)),
-  Concat('Title: ', Coalesce(biblio.title, deletedbiblio.title)),
-  Concat('Item barcode: ', deleteditems.barcode),
-  Concat('Replacement price: ', deleteditems.replacementprice),
-  Concat('Item id number: ', deleteditems.itemnumber),
-  Concat(
-    "<br />Damaged status: ",
-    If(
-      deleteditems.damaged = 0,
-      "-",
-      If(deleteditems.damaged IS NULL, "-", damagedi.lib)
-    )
-  ),
-  Concat(
-    "Lost status: ",
-    If(
-      deleteditems.itemlost = 0,
-      "-",
-      If(deleteditems.itemlost IS NULL, "-", Concat(losti.lib, " on ", deleteditems.itemlost_on))
-    )
-  ),
-  Concat(
-    "Withdrawn status: ",
-    If(
-      deleteditems.withdrawn = 0,
-      "-",
-      If(
-        deleteditems.withdrawn IS NULL,
-        "- ",
-        Concat(deletedwithdrawni.lib, " on ", deleteditems.withdrawn_on)
-      )
-    )
-  ),
-  If(
-    biblio.biblionumber IS NULL,
-    "<br />-- Bibliographic record has been deleted --",
+  CONCAT_WS("<br />",
+    '<h2 style="color: white; background-color: #AD2A1A; text-align: center;">This item has been deleted</h2>',
+    Concat('Home library: ', deleteditems.homebranch),
+    Concat('Current library: ', deleteditems.holdingbranch),
+    Concat('Permanent location: ', deleteditems.permanent_location),
+    Concat('Current location: ', deleteditems.location),
+    Concat('Item type: ', deleteditems.itype),
+    Concat('Collection code: ', ccodes.lib),
+    Concat('Call#: ', deleteditems.itemcallnumber),
+    Concat('Author: ', Coalesce(biblio.author, deletedbiblio.author)),
+    Concat('Title: ', Coalesce(biblio.title, deletedbiblio.title)),
+    Concat('Item barcode: ', deleteditems.barcode),
+    Concat('Replacement price: ', deleteditems.replacementprice),
+    Concat('Item id number: ', deleteditems.itemnumber),
     Concat(
-      "<br /><a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
-      biblio.biblionumber,
-      "' target='_blank'>Go to the bibliographic record</a>"
-    )
-  ),
-  Concat(
-    "<br /><a href='/cgi-bin/koha/reports/guided_reports.pl?phase=Run+this+report&reports=3009&sql_params=",
-    Replace(
+      "<br />Damaged status: ",
+      If(
+        deleteditems.damaged = 0,
+        "-",
+        If(
+          deleteditems.damaged IS NULL,
+          "-",
+          damageds.lib
+        )
+      )
+    ),
+    Concat(
+      "Lost status: ",
+      If(
+        deleteditems.itemlost = 0,
+        "-",
+        If(
+          deleteditems.itemlost IS NULL,
+          "-",
+          Concat(losts.lib, " on ", deleteditems.itemlost_on)
+        )
+      )
+    ),
+    Concat(
+      "Withdrawn status: ",
+      If(
+        deleteditems.withdrawn = 0,
+        "-",
+        If(
+          deleteditems.withdrawn IS NULL,
+          "- ",
+          Concat(withdrawns.lib, " on ", deleteditems.withdrawn_on)
+        )
+      )
+    ),
+    Concat(
+      ": ",
+      If(
+        biblio.biblionumber IS NULL,
+        "<br />-- Bibliographic record has been deleted --",
+        Concat(
+          "<br /><a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+          biblio.biblionumber,
+          "' target='_blank'>Go to the bibliographic record</a>"
+        )
+      )
+    ),
+    Concat(
+      "<br /><a href='/cgi-bin/koha/reports/guided_reports.pl?phase=Run+this+report&reports=3009&sql_params=",
       Replace(
         Replace(
           Replace(
             Replace(
               Replace(
                 Replace(
-                  deleteditems.barcode,
-                  Char(43),
-                  "%2B"),
-                Char(47),
-                "%2F"),
-              Char(32),
-              "%20"),
-            Char(45),
-            "%2D"),
-          Char(36),
-          "%24"),
-        Char(37),
-        "%25"),
-      Char(46),
-      "%2E"
+                  Replace(
+                    deleteditems.barcode,
+                    Char(43),
+                    "%2B"),
+                  Char(47),
+                  "%2F"),
+                Char(32),
+                "%20"),
+              Char(45),
+              "%2D"),
+            Char(36),
+            "%24"),
+          Char(37),
+          "%25"),
+        Char(46),
+        "%2E"
+      ),
+      "&limit=50' target='_blank'>Search payment and fee notes and descriptions for this item barcode number</a>"
     ),
-    "&limit=50' target='_blank'>Search payment and fee notes and descriptions for this item barcode number</a>"
-  ),
-  '<br /><h2 style="color: white; background-color: #AD2A1A; text-align: center;">This item was deleted from the catalog<br />within the past 13 months</h2>'
+    '<br /><h2 style="color: white; background-color: #AD2A1A; text-align: center;">This item was deleted from the catalog<br />within the past 13 months</h2>'
   ) AS INFO
 FROM
-  deleteditems
-LEFT JOIN (
-    SELECT
+  deleteditems LEFT JOIN
+  biblio ON deleteditems.biblionumber = biblio.biblionumber LEFT JOIN
+  deletedbiblio ON deletedbiblio.biblionumber = deleteditems.biblionumber
+  LEFT JOIN
+  (SELECT
       authorised_values.category,
       authorised_values.authorised_value,
       authorised_values.lib
     FROM
       authorised_values
     WHERE
-      authorised_values.category = 'CCODE'
-    ) ccodes
-  ON deleteditems.ccode = ccodes.authorised_value
-LEFT JOIN biblio
-  ON deleteditems.biblionumber = biblio.biblionumber
-LEFT JOIN deletedbiblio
-  ON deleteditems.biblionumber = deletedbiblio.biblionumber
-LEFT JOIN (
-    SELECT
+      authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = deleteditems.permanent_location
+  LEFT JOIN
+  (SELECT
       authorised_values.category,
       authorised_values.authorised_value,
       authorised_values.lib
     FROM
       authorised_values
     WHERE
-      authorised_values.category = 'DAMAGED'
-    ) damagedi
-  ON damagedi.authorised_value = deleteditems.damaged
-LEFT JOIN (
-    SELECT
+      authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      deleteditems.location LEFT JOIN
+  (SELECT
+      itemtypes.itemtype,
+      itemtypes.description
+    FROM
+      itemtypes) itemtypess ON itemtypess.itemtype = deleteditems.itype
+  LEFT JOIN
+  (SELECT
       authorised_values.category,
       authorised_values.authorised_value,
       authorised_values.lib
     FROM
       authorised_values
     WHERE
-      authorised_values.category = 'LOST'
-    ) losti
-ON losti.authorised_value = deleteditems.itemlost
-LEFT JOIN (
-    SELECT
+      authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      deleteditems.ccode LEFT JOIN
+  (SELECT
       authorised_values.category,
       authorised_values.authorised_value,
       authorised_values.lib
     FROM
       authorised_values
     WHERE
-      authorised_values.category = 'WITHDRAWN'
-    ) deletedwithdrawni
-ON deletedwithdrawni.authorised_value = deleteditems.withdrawn
+      authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = deleteditems.notforloan LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = deleteditems.damaged LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      deleteditems.itemlost LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = deleteditems.withdrawn
 WHERE
-  deleteditems.barcode LIKE Concat("%", <<Enter barcode number>>, "%")
+  deleteditems.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
-  deleteditems.itemnumber
+  deleteditems.itemnumber,
+  biblio.biblionumber
 
 {% endhighlight %}
 
@@ -443,7 +468,7 @@ FROM
   items JOIN
   biblio ON items.biblionumber = biblio.biblionumber
 WHERE
-  items.barcode LIKE CONCAT('%', <<Enter item barcode>>, '%')
+  items.barcode LIKE CONCAT('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -513,7 +538,7 @@ FROM
 
 
 WHERE
-  items.barcode LIKE CONCAT('%', <<Enter item barcode>>, '%')
+  items.barcode LIKE CONCAT('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -665,7 +690,7 @@ LEFT JOIN
 
 
 WHERE
-  items.barcode LIKE CONCAT('%', <<Enter item barcode>>, '%')
+  items.barcode LIKE CONCAT('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -783,7 +808,7 @@ FROM
       authorised_values.category = 'WITHDRAWN') withdrawns ON
       withdrawns.authorised_value = items.withdrawn
 WHERE
-  items.barcode LIKE CONCAT('%', <<Enter item barcode>>, '%')
+  items.barcode LIKE CONCAT('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -913,7 +938,7 @@ JOIN
 
 
 WHERE
-  items.barcode LIKE Concat('%', <<Enter item barcode>>, '%')
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -1047,7 +1072,7 @@ FROM
       authorised_values
     WHERE
       authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
 
 /* Links items to the issues table so we can get current borrower information if the item is checked out */
@@ -1062,7 +1087,7 @@ LEFT JOIN
 
 
 WHERE
-  items.barcode LIKE Concat('%', <<Enter item barcode>>, '%')
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -1210,7 +1235,7 @@ FROM
       authorised_values
     WHERE
       authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -1237,7 +1262,7 @@ LEFT JOIN
 
 
 WHERE
-  items.barcode LIKE Concat('%', <<Enter item barcode 0003008200544>>, '%')
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -1372,7 +1397,7 @@ FROM
       authorised_values
     WHERE
       authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -1393,7 +1418,7 @@ FROM
       branchtransfers.datearrived IS NULL) transfersi ON transfersi.itemnumber =
       items.itemnumber
 WHERE
-  items.barcode LIKE Concat('%', <<Enter item barcode>>, '%')
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -1639,7 +1664,7 @@ FROM
       authorised_values
     WHERE
       authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -1660,7 +1685,7 @@ FROM
       branchtransfers.datearrived IS NULL) transfersi ON transfersi.itemnumber =
       items.itemnumber
 WHERE
-  items.barcode LIKE Concat('%', <<Enter item barcode 0003008200544>>, '%')
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -1860,7 +1885,7 @@ FROM
      authorised_values
    WHERE
      authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -1881,7 +1906,7 @@ FROM
      branchtransfers.datearrived IS NULL) transfersi ON transfersi.itemnumber =
       items.itemnumber
 WHERE
-  items.barcode LIKE Concat('%', <<Enter item barcode 0003008200544>>, '%')
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -2081,7 +2106,7 @@ FROM
      authorised_values
    WHERE
      authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -2102,7 +2127,7 @@ FROM
      branchtransfers.datearrived IS NULL) transfersi ON transfersi.itemnumber =
       items.itemnumber
 WHERE
-  items.barcode LIKE Concat('%', <<Enter item barcode 0003008200544>>, '%')
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -2313,7 +2338,7 @@ FROM
      authorised_values
    WHERE
      authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -2334,7 +2359,7 @@ FROM
      branchtransfers.datearrived IS NULL) transfersi ON transfersi.itemnumber =
       items.itemnumber
 WHERE
-  items.barcode LIKE Concat('%', <<Enter item barcode 0003008200544>>, '%')
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -2544,7 +2569,7 @@ FROM
      authorised_values
    WHERE
      authorised_values.category = 'WITHDRAWN') withdrawns ON
-      withdrawns.authorised_value = items.withdrawn INNER JOIN
+      withdrawns.authorised_value = items.withdrawn JOIN
   biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
   LEFT JOIN
   (SELECT
@@ -2565,7 +2590,7 @@ FROM
      branchtransfers.datearrived IS NULL) transfersi ON transfersi.itemnumber =
       items.itemnumber
 WHERE
-  items.barcode LIKE Concat('%', <<Enter item barcode 0003008200544>>, '%')
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
 GROUP BY
   items.itemnumber,
   biblio.biblionumber
@@ -2584,22 +2609,1516 @@ The next step is to write a report that runs, more-or-less, the same report agai
 
 I'm going to go through that in a lot fewer steps, though.
 
+## Result I'm expecting
+
+The result I'm eventually shooting for is this:
+
+{% highlight SQL linenos %}
+
+SELECT
+  Concat_Ws('<br />',
+  '<h2 style="color: white; background-color: #AD2A1A; text-align: center;">This item has been deleted</h2>',
+  Concat(
+    'At the time of its deletion on:  <ins><strong>',
+    deleteditems.timestamp,
+    "<br /></strong></ins> this item's information was as follows:<br />"
+  ),
+  Concat('Home library: ', deleteditems.homebranch),
+  Concat('Current library: ', deleteditems.holdingbranch),
+  Concat('Permanent location: ', deleteditems.permanent_location),
+  Concat('Current location: ', deleteditems.location),
+  Concat('Item type: ', deleteditems.itype),
+  Concat('Collection code: ', ccodes.lib),
+  Concat('Call#: ', deleteditems.itemcallnumber),
+  Concat('Author: ', Coalesce(biblio.author, deletedbiblio.author)),
+  Concat('Title: ', Coalesce(biblio.title, deletedbiblio.title)),
+  Concat('Item barcode: ', deleteditems.barcode),
+  Concat('Replacement price: ', deleteditems.replacementprice),
+  Concat('Item id number: ', deleteditems.itemnumber),
+  Concat(
+    "<br />Damaged status: ",
+    If(
+      deleteditems.damaged = 0,
+      "-",
+      If(deleteditems.damaged IS NULL, "-", damagedi.lib)
+    )
+  ),
+  Concat(
+    "Lost status: ",
+    If(
+      deleteditems.itemlost = 0,
+      "-",
+      If(deleteditems.itemlost IS NULL, "-", Concat(losti.lib, " on ", deleteditems.itemlost_on))
+    )
+  ),
+  Concat(
+    "Withdrawn status: ",
+    If(
+      deleteditems.withdrawn = 0,
+      "-",
+      If(
+        deleteditems.withdrawn IS NULL,
+        "- ",
+        Concat(deletedwithdrawni.lib, " on ", deleteditems.withdrawn_on)
+      )
+    )
+  ),
+  If(
+    biblio.biblionumber IS NULL,
+    "<br />-- Bibliographic record has been deleted --",
+    Concat(
+      "<br /><a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+      biblio.biblionumber,
+      "' target='_blank'>Go to the bibliographic record</a>"
+    )
+  ),
+  Concat(
+    "<br /><a href='/cgi-bin/koha/reports/guided_reports.pl?phase=Run+this+report&reports=3009&sql_params=",
+    Replace(
+      Replace(
+        Replace(
+          Replace(
+            Replace(
+              Replace(
+                Replace(
+                  deleteditems.barcode,
+                  Char(43),
+                  "%2B"),
+                Char(47),
+                "%2F"),
+              Char(32),
+              "%20"),
+            Char(45),
+            "%2D"),
+          Char(36),
+          "%24"),
+        Char(37),
+        "%25"),
+      Char(46),
+      "%2E"
+    ),
+    "&limit=50' target='_blank'>Search payment and fee notes and descriptions for this item barcode number</a>"
+  ),
+  '<br /><h2 style="color: white; background-color: #AD2A1A; text-align: center;">This item was deleted from the catalog<br />within the past 13 months</h2>'
+  ) AS INFO
+FROM
+  deleteditems
+LEFT JOIN (
+    SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'CCODE'
+    ) ccodes
+  ON deleteditems.ccode = ccodes.authorised_value
+LEFT JOIN biblio
+  ON deleteditems.biblionumber = biblio.biblionumber
+LEFT JOIN deletedbiblio
+  ON deleteditems.biblionumber = deletedbiblio.biblionumber
+LEFT JOIN (
+    SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'DAMAGED'
+    ) damagedi
+  ON damagedi.authorised_value = deleteditems.damaged
+LEFT JOIN (
+    SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOST'
+    ) losti
+ON losti.authorised_value = deleteditems.itemlost
+LEFT JOIN (
+    SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'WITHDRAWN'
+    ) deletedwithdrawni
+ON deletedwithdrawni.authorised_value = deleteditems.withdrawn
+WHERE
+  deleteditems.barcode LIKE Concat("%", <<Enter item barcode number>>, "%")
+GROUP BY
+  deleteditems.itemnumber
+
+{% endhighlight %}
+
+And I'm going to take these steps to get there:
+
+
 ## Step 13
 
-This SQL gets all of the data I might need from the deleted items table.
+This SQL gets all of the data I might need from the deleted items table - but there is one major difference from the way I did this in the report for un-deleted items.  Instead of doing a normal join to the biblio table, I have to do a left join.  This is because, if an item has been deleted, it's possible that the corresponding bibliographic record has also been deleted.  If SQL is trying to show results where there must be a match between items.biblionumber and biblio.biblionumber and the bibliographic record no longer exists, you won't get any bibliogrpahic or item information.  If you use a left join, however, then you can get a results from the report even if the biblio has been moved to the deletedbiblio table.
+
+To speed things up, I'm going to show this SQL at a point where I'm already getting the locations, item type descriptions, collection code information, and status information as descriptions instead of codes.  I'm also already combining the statuses and their dates where applicable.  I'm also dropping a few fields I don't need like "deleteditems.onloan."
+
+{% highlight SQL linenos %}
+
+SELECT
+  deleteditems.homebranch,
+  deleteditems.holdingbranch,
+  deleteditems.permanent_location,
+  deleteditems.location,
+  deleteditems.itype,
+  ccodes.lib,
+  deleteditems.itemcallnumber,
+  biblio.author,
+  biblio.title,
+  deleteditems.barcode,
+  deleteditems.replacementprice,
+  deleteditems.itemnumber,
+  Concat(damageds.lib, ' ', deleteditems.damaged_on) AS DAMAGED,
+  Concat(losts.lib, ' ', deleteditems.itemlost_on) AS LOST,
+  Concat(withdrawns.lib, ' ', deleteditems.withdrawn_on) AS WITHDRAWN
+
+
+/* Note here that the join between deleteditems and biblio is a LEFT JOIN */
+
+FROM
+  deleteditems LEFT JOIN
+  biblio ON deleteditems.biblionumber = biblio.biblionumber
+
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = deleteditems.permanent_location
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      deleteditems.location LEFT JOIN
+  (SELECT
+      itemtypes.itemtype,
+      itemtypes.description
+    FROM
+      itemtypes) itemtypess ON itemtypess.itemtype = deleteditems.itype
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      deleteditems.ccode LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = deleteditems.notforloan LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = deleteditems.damaged LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      deleteditems.itemlost LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = deleteditems.withdrawn
+WHERE
+  deleteditems.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
+GROUP BY
+  deleteditems.itemnumber,
+  biblio.biblionumber
+
+{% endhighlight %}
+
+
+## Step 14
+
+Since I can only get biblio information from the last step if the bibliographic record has not been deleted, the next logical step is to add in the deletedbiblio table so that I can get bibliographic information whether the biblio has been deleted or not.  This involves using the SQL "Coalesce" function.
+
+If you don't know how to use coalesce, please check out the video: <a href="https://youtu.be/35UvrpcYFFA" target="_blank">SQL: Coalesce</a>
+
+<mark>In the koha-US video I mention that there's a problem with the SQL at this point and that I could not get the correct results from the deletedbiblios table.  This was an error.  The actual problem was that the item barcode number I was using for a deleted item with a deleted biblio was for an ILL item and it didn't have an author or a title in the record.  I was expecting a title and an author from a title that didn't have either.</mark>
+
+{% highlight SQL linenos %}
+
+SELECT
+deleteditems.homebranch,
+deleteditems.holdingbranch,
+deleteditems.permanent_location,
+deleteditems.location,
+deleteditems.itype,
+ccodes.lib,
+deleteditems.itemcallnumber,
+
+
+/* Coalesce biblio and deletedbiblio data */
+
+  Coalesce(biblio.author, deletedbiblio.author),
+  Coalesce(biblio.title, deletedbiblio.title),
+
+
+  deleteditems.barcode,
+  deleteditems.replacementprice,
+  deleteditems.itemnumber,
+  Concat(damageds.lib, ' ', deleteditems.damaged_on) AS DAMAGED,
+  Concat(losts.lib, ' ', deleteditems.itemlost_on) AS LOST,
+  Concat(withdrawns.lib, ' ', deleteditems.withdrawn_on) AS WITHDRAWN
+FROM
+  deleteditems LEFT JOIN
+  biblio ON deleteditems.biblionumber = biblio.biblionumber
+
+
+/* New left join to deletedbiblio */
+
+  LEFT JOIN
+  deletedbiblio ON deletedbiblio.biblionumber = deleteditems.biblionumber LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = deleteditems.permanent_location
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      deleteditems.location LEFT JOIN
+  (SELECT
+      itemtypes.itemtype,
+      itemtypes.description
+    FROM
+      itemtypes) itemtypess ON itemtypess.itemtype = deleteditems.itype
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      deleteditems.ccode LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = deleteditems.notforloan LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = deleteditems.damaged LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      deleteditems.itemlost LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = deleteditems.withdrawn
+WHERE
+  deleteditems.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
+GROUP BY
+  deleteditems.itemnumber,
+  biblio.biblionumber
+
+{% endhighlight %}
+
+
+## Step 15
+
+There are some things that I don't have to do with the deleted items report that I did do with the still-available items report.  Specifically, I don't link out to item record and I don't link out to any of the same reports I was linking to before.  Those reports aren't built to show information about deleted items, so adding them to this report would really be a waste of time.
+
+The page I do want to link out to link out to is the bibliographic record (if it hasn't been deleted).  I also have a report that looks for item barcode numbers in the accountlines descriptions and notes to help me identify fees and payments that might be associated with the deleted item.
+
+That report is Item circ history: 3009 - <a href="https://github.com/northeast-kansas-library-system/nextkansas.sql/blob/master/R.003009.sql" target="_blank">Click here for report 2785</a>
+
+
+{% highlight SQL linenos %}
+
+SELECT
+  deleteditems.homebranch,
+  deleteditems.holdingbranch,
+  deleteditems.permanent_location,
+  deleteditems.location,
+  deleteditems.itype,
+  ccodes.lib,
+  deleteditems.itemcallnumber,
+  Coalesce(biblio.author, deletedbiblio.author),
+  Coalesce(biblio.title, deletedbiblio.title),
+  deleteditems.barcode,
+  deleteditems.replacementprice,
+  deleteditems.itemnumber,
+  Concat(damageds.lib, ' ', deleteditems.damaged_on) AS DAMAGED,
+  Concat(losts.lib, ' ', deleteditems.itemlost_on) AS LOST,
+  Concat(withdrawns.lib, ' ', deleteditems.withdrawn_on) AS WITHDRAWN,
+
+
+/* This section uses an if/then statement to display a message if the biblio has been deleted or a link to the biblio record if it has not */
+
+  If(
+    biblio.biblionumber IS NULL,
+    "<br />-- Bibliographic record has been deleted --",
+    Concat(
+      "<br /><a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+      biblio.biblionumber,
+      "' target='_blank'>Go to the bibliographic record</a>"
+    )
+  ),
+
+
+/* This section links out to a report that searches for the item barcode number in accountlines */
+
+  Concat(
+    "<br /><a href='/cgi-bin/koha/reports/guided_reports.pl?phase=Run+this+report&reports=3009&sql_params=",
+    Replace(
+      Replace(
+        Replace(
+          Replace(
+            Replace(
+              Replace(
+                Replace(
+                  deleteditems.barcode,
+                  Char(43),
+                  "%2B"),
+                Char(47),
+                "%2F"),
+              Char(32),
+              "%20"),
+            Char(45),
+            "%2D"),
+          Char(36),
+          "%24"),
+        Char(37),
+        "%25"),
+      Char(46),
+      "%2E"
+    ),
+    "&limit=50' target='_blank'>Search payment and fee notes and descriptions for this item barcode number</a>"
+  ) AS LINK_TO_REPORT
 
 
 
+FROM
+  deleteditems LEFT JOIN
+  biblio ON deleteditems.biblionumber = biblio.biblionumber  LEFT JOIN
+  deletedbiblio ON deletedbiblio.biblionumber = deleteditems.biblionumber LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = deleteditems.permanent_location
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      deleteditems.location LEFT JOIN
+  (SELECT
+      itemtypes.itemtype,
+      itemtypes.description
+    FROM
+      itemtypes) itemtypess ON itemtypess.itemtype = deleteditems.itype
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      deleteditems.ccode LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = deleteditems.notforloan LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = deleteditems.damaged LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      deleteditems.itemlost LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = deleteditems.withdrawn
+WHERE
+  deleteditems.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
+GROUP BY
+  deleteditems.itemnumber,
+  biblio.biblionumber
+
+{% endhighlight %}
+
+
+## Step 16
+
+And at this point I'm going to add all of the labels into the deleted items data.  Another thing you may notice, though, is that I've dropped the process of getting the 245$b, $p, $n, etc.  It is possible to get that data, but because you're looking in two different sets of tables, it's more complicated and not worth the effort for what I wanted to accomplish with deleted items.
+
+{% highlight SQL linenos %}
+
+SELECT
+  Concat('Home library: ', deleteditems.homebranch),
+  Concat('Current library: ', deleteditems.holdingbranch),
+  Concat('Permanent location: ', deleteditems.permanent_location),
+  Concat('Current location: ', deleteditems.location),
+  Concat('Item type: ', deleteditems.itype),
+  Concat('Collection code: ', ccodes.lib),
+  Concat('Call#: ', deleteditems.itemcallnumber),
+  Concat('Author: ', Coalesce(biblio.author, deletedbiblio.author)),
+  Concat('Title: ', Coalesce(biblio.title, deletedbiblio.title)),
+  Concat('Item barcode: ', deleteditems.barcode),
+  Concat('Replacement price: ', deleteditems.replacementprice),
+  Concat('Item id number: ', deleteditems.itemnumber),
+  Concat(
+    "<br />Damaged status: ",
+    If(
+      deleteditems.damaged = 0,
+      "-",
+      If(
+        deleteditems.damaged IS NULL,
+        "-",
+        damageds.lib
+      )
+    )
+  ),
+  Concat(
+    "Lost status: ",
+    If(
+      deleteditems.itemlost = 0,
+      "-",
+      If(
+        deleteditems.itemlost IS NULL,
+        "-",
+        Concat(losts.lib, " on ", deleteditems.itemlost_on)
+      )
+    )
+  ),
+  Concat(
+    "Withdrawn status: ",
+    If(
+      deleteditems.withdrawn = 0,
+      "-",
+      If(
+        deleteditems.withdrawn IS NULL,
+        "- ",
+        Concat(withdrawns.lib, " on ", deleteditems.withdrawn_on)
+      )
+    )
+  ),
+  Concat(
+    ": ",
+    If(
+      biblio.biblionumber IS NULL,
+      "<br />-- Bibliographic record has been deleted --",
+      Concat(
+        "<br /><a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+        biblio.biblionumber,
+        "' target='_blank'>Go to the bibliographic record</a>"
+      )
+    )
+  ),
+  Concat(
+    "<br /><a href='/cgi-bin/koha/reports/guided_reports.pl?phase=Run+this+report&reports=3009&sql_params=",
+    Replace(
+      Replace(
+        Replace(
+          Replace(
+            Replace(
+              Replace(
+                Replace(
+                  deleteditems.barcode,
+                  Char(43),
+                  "%2B"),
+                Char(47),
+                "%2F"),
+              Char(32),
+              "%20"),
+            Char(45),
+            "%2D"),
+          Char(36),
+          "%24"),
+        Char(37),
+        "%25"),
+      Char(46),
+      "%2E"
+    ),
+    "&limit=50' target='_blank'>Search payment and fee notes and descriptions for this item barcode number</a>"
+  )
+FROM
+  deleteditems LEFT JOIN
+  biblio ON deleteditems.biblionumber = biblio.biblionumber LEFT JOIN
+  deletedbiblio ON deletedbiblio.biblionumber = deleteditems.biblionumber
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = deleteditems.permanent_location
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      deleteditems.location LEFT JOIN
+  (SELECT
+      itemtypes.itemtype,
+      itemtypes.description
+    FROM
+      itemtypes) itemtypess ON itemtypess.itemtype = deleteditems.itype
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      deleteditems.ccode LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = deleteditems.notforloan LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = deleteditems.damaged LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      deleteditems.itemlost LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = deleteditems.withdrawn
+WHERE
+  deleteditems.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
+GROUP BY
+  deleteditems.itemnumber,
+  biblio.biblionumber
+
+{% endhighlight %}
+
+
+## Step 17
+
+The last step for the deleted item information, then, is to push it into one column with appropriate section breaks.  That looks like this:
+
+{% highlight SQL linenos %}
+
+SELECT
+
+
+/* Here we add the concat_ws to put everything done so far into one cell in the results table */
+
+  CONCAT_WS("<br />",
+
+    Concat('Home library: ', deleteditems.homebranch),
+    Concat('Current library: ', deleteditems.holdingbranch),
+    Concat('Permanent location: ', deleteditems.permanent_location),
+    Concat('Current location: ', deleteditems.location),
+    Concat('Item type: ', deleteditems.itype),
+    Concat('Collection code: ', ccodes.lib),
+    Concat('Call#: ', deleteditems.itemcallnumber),
+    Concat('Author: ', Coalesce(biblio.author, deletedbiblio.author)),
+    Concat('Title: ', Coalesce(biblio.title, deletedbiblio.title)),
+    Concat('Item barcode: ', deleteditems.barcode),
+    Concat('Replacement price: ', deleteditems.replacementprice),
+    Concat('Item id number: ', deleteditems.itemnumber),
+    Concat(
+      "<br />Damaged status: ",
+      If(
+        deleteditems.damaged = 0,
+        "-",
+        If(
+          deleteditems.damaged IS NULL,
+          "-",
+          damageds.lib
+        )
+      )
+    ),
+    Concat(
+      "Lost status: ",
+      If(
+        deleteditems.itemlost = 0,
+        "-",
+        If(
+          deleteditems.itemlost IS NULL,
+          "-",
+          Concat(losts.lib, " on ", deleteditems.itemlost_on)
+        )
+      )
+    ),
+    Concat(
+      "Withdrawn status: ",
+      If(
+        deleteditems.withdrawn = 0,
+        "-",
+        If(
+          deleteditems.withdrawn IS NULL,
+          "- ",
+          Concat(withdrawns.lib, " on ", deleteditems.withdrawn_on)
+        )
+      )
+    ),
+    Concat(
+      ": ",
+      If(
+        biblio.biblionumber IS NULL,
+        "<br />-- Bibliographic record has been deleted --",
+        Concat(
+          "<br /><a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+          biblio.biblionumber,
+          "' target='_blank'>Go to the bibliographic record</a>"
+        )
+      )
+    ),
+    Concat(
+      "<br /><a href='/cgi-bin/koha/reports/guided_reports.pl?phase=Run+this+report&reports=3009&sql_params=",
+      Replace(
+        Replace(
+          Replace(
+            Replace(
+              Replace(
+                Replace(
+                  Replace(
+                    deleteditems.barcode,
+                    Char(43),
+                    "%2B"),
+                  Char(47),
+                  "%2F"),
+                Char(32),
+                "%20"),
+              Char(45),
+              "%2D"),
+            Char(36),
+            "%24"),
+          Char(37),
+          "%25"),
+        Char(46),
+        "%2E"
+      ),
+      "&limit=50' target='_blank'>Search payment and fee notes and descriptions for this item barcode number</a>"
+    )
+
+/* The ") AS INFO" closes out the CONCAT_WS at the beginning and gives the column a name */
+
+
+  ) AS INFO
+FROM
+  deleteditems LEFT JOIN
+  biblio ON deleteditems.biblionumber = biblio.biblionumber LEFT JOIN
+  deletedbiblio ON deletedbiblio.biblionumber = deleteditems.biblionumber
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = deleteditems.permanent_location
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      deleteditems.location LEFT JOIN
+  (SELECT
+      itemtypes.itemtype,
+      itemtypes.description
+    FROM
+      itemtypes) itemtypess ON itemtypess.itemtype = deleteditems.itype
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      deleteditems.ccode LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = deleteditems.notforloan LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = deleteditems.damaged LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      deleteditems.itemlost LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = deleteditems.withdrawn
+WHERE
+  deleteditems.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
+GROUP BY
+  deleteditems.itemnumber,
+  biblio.biblionumber
+
+{% endhighlight %}
+
+
+At this point we now have a report that will give us item information on an item that has been deleted but is still in the deleteditems table.
+
+## Step 18
+
+The last thing I'm going to do here is add a header and footer like I did for the active items.  In that SQL I used a green highlight.  In this one I'm going to use red.
+
+{% highlight SQL linenos %}
+
+SELECT
+  CONCAT_WS("<br />",
+
+  /* Here is the HTML that will make it obvious to staff that the item has been deleted */
+
+    '<h2 style="color: white; background-color: #AD2A1A; text-align: center;">This item has been deleted</h2>',
+
+    Concat('Home library: ', deleteditems.homebranch),
+    Concat('Current library: ', deleteditems.holdingbranch),
+    Concat('Permanent location: ', deleteditems.permanent_location),
+    Concat('Current location: ', deleteditems.location),
+    Concat('Item type: ', deleteditems.itype),
+    Concat('Collection code: ', ccodes.lib),
+    Concat('Call#: ', deleteditems.itemcallnumber),
+    Concat('Author: ', Coalesce(biblio.author, deletedbiblio.author)),
+    Concat('Title: ', Coalesce(biblio.title, deletedbiblio.title)),
+    Concat('Item barcode: ', deleteditems.barcode),
+    Concat('Replacement price: ', deleteditems.replacementprice),
+    Concat('Item id number: ', deleteditems.itemnumber),
+    Concat(
+      "<br />Damaged status: ",
+      If(
+        deleteditems.damaged = 0,
+        "-",
+        If(
+          deleteditems.damaged IS NULL,
+          "-",
+          damageds.lib
+        )
+      )
+    ),
+    Concat(
+      "Lost status: ",
+      If(
+        deleteditems.itemlost = 0,
+        "-",
+        If(
+          deleteditems.itemlost IS NULL,
+          "-",
+          Concat(losts.lib, " on ", deleteditems.itemlost_on)
+        )
+      )
+    ),
+    Concat(
+      "Withdrawn status: ",
+      If(
+        deleteditems.withdrawn = 0,
+        "-",
+        If(
+          deleteditems.withdrawn IS NULL,
+          "- ",
+          Concat(withdrawns.lib, " on ", deleteditems.withdrawn_on)
+        )
+      )
+    ),
+    Concat(
+      ": ",
+      If(
+        biblio.biblionumber IS NULL,
+        "<br />-- Bibliographic record has been deleted --",
+        Concat(
+          "<br /><a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+          biblio.biblionumber,
+          "' target='_blank'>Go to the bibliographic record</a>"
+        )
+      )
+    ),
+    Concat(
+      "<br /><a href='/cgi-bin/koha/reports/guided_reports.pl?phase=Run+this+report&reports=3009&sql_params=",
+      Replace(
+        Replace(
+          Replace(
+            Replace(
+              Replace(
+                Replace(
+                  Replace(
+                    deleteditems.barcode,
+                    Char(43),
+                    "%2B"),
+                  Char(47),
+                  "%2F"),
+                Char(32),
+                "%20"),
+              Char(45),
+              "%2D"),
+            Char(36),
+            "%24"),
+          Char(37),
+          "%25"),
+        Char(46),
+        "%2E"
+      ),
+      "&limit=50' target='_blank'>Search payment and fee notes and descriptions for this item barcode number</a>"
+    ),
+
+  /* Here is the HTML that will make it obvious to staff that the item has been deleted */
+
+    '<br /><h2 style="color: white; background-color: #AD2A1A; text-align: center;">This item was deleted from the catalog<br />within the past 13 months</h2>'
+
+  ) AS INFO
+FROM
+  deleteditems LEFT JOIN
+  biblio ON deleteditems.biblionumber = biblio.biblionumber LEFT JOIN
+  deletedbiblio ON deletedbiblio.biblionumber = deleteditems.biblionumber
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = deleteditems.permanent_location
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      deleteditems.location LEFT JOIN
+  (SELECT
+      itemtypes.itemtype,
+      itemtypes.description
+    FROM
+      itemtypes) itemtypess ON itemtypess.itemtype = deleteditems.itype
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      deleteditems.ccode LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = deleteditems.notforloan LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = deleteditems.damaged LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      deleteditems.itemlost LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = deleteditems.withdrawn
+WHERE
+  deleteditems.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
+GROUP BY
+  deleteditems.itemnumber,
+  biblio.biblionumber
+
+{% endhighlight %}
+
+
+## Step 19
+
+At this point we now have two working reports.  One that will take an active item barcode number and spit out a bunch of data and another that will take the barcode number from a deleted item and spit out a bunch of informaiton.  The final step is to combine the two reports.  This requires the SQL "Union" function.
+
+If you don't know how to use "union", please check out the video: <a href="https://youtu.be/FJTFMaga-PU" target="_blank">SQL - Unions</a>
+
+{% highlight SQL linenos %}
+
+SELECT
+  CONCAT_WS("<br />",
+    '<h3 style="color: white; background-color: #829356; text-align: center;">This item is currently in the catalog</h3>',
+    Concat("Home library: ", items.homebranch),
+    Concat("Current library: ", items.holdingbranch),
+    Concat("Permanent location: ", permanent_locss.lib),
+    Concat("Current location: ", locss.lib),
+    Concat("Item type: ", itemtypess.description),
+    Concat("Collection code: ", ccodes.lib),
+    Concat("Call number: ", items.itemcallnumber),
+    Concat("Author: ", biblio.author),
+    Concat("Title: ",
+      Concat_Ws(' ',
+        biblio.title, ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="h"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="b"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="n"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="p"]'),
+        ExtractValue(biblio_metadata.metadata,  '//datafield[@tag="245"]/subfield[@code="c"]')
+      )
+    ),
+    Concat("Item barcode: ", items.barcode),
+    Concat("Public notes: ", items.itemnotes),
+    Concat("Non-public notes: ", items.itemnotes_nonpublic),
+    Concat("<br />Checkouts: ", items.issues),
+    Concat("Renewals: ", items.renewals),
+    Concat("Date added: ", items.dateaccessioned),
+    Concat("Last borrowed: ", items.datelastborrowed),
+    Concat("Last seen: ", items.datelastseen),
+    Concat("Item record last modified: ", items.timestamp),
+    Concat("Due date: ", issuesi.date_due),
+    Concat("Not for loan status: ", notforloans.lib),
+    Concat("Damaged: ", Concat(damageds.lib, ' ', items.damaged_on)),
+    Concat("Lost: ", Concat(losts.lib, ' ', items.itemlost_on)),
+    Concat("Withdrawn: ", Concat(withdrawns.lib, ' ', items.withdrawn_on)),
+    Concat(
+      "In transit from: ",
+      If(
+        transfersi.frombranch IS NULL,
+        "-",
+        Concat(transfersi.frombranch, " to ", transfersi.tobranch, " since ", transfersi.datesent)
+      )
+    ),
+    Concat(
+      "<br />Link to borrower: ",
+      If(
+        issuesi.date_due IS NULL,
+        "-",
+        Concat(
+          "<a href='/cgi-bin/koha/circ/circulation.pl?borrowernumber=",  
+          issuesi.borrowernumber,
+          "' target='_blank'>go to the borrower's account</a>"
+        )
+      )
+    ),
+    Concat(
+      "Link to title: ",
+      Concat(
+        "<a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+        biblio.biblionumber,
+        "' target='_blank'>go to the bibliographic record</a>"
+      )
+    ),
+    Concat(
+      "Link to item: ",
+      Concat(
+        "<a href='/cgi-bin/koha/catalogue/moredetail.pl?itemnumber=",
+        items.itemnumber,
+        "&biblionumber=",
+        biblio.biblionumber,
+        "' target='_blank'>go to the item record</a>"
+      )
+    ),
+    Concat(
+      "<br />Item circ history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=2785&phase=Run+this+report&param_name=Enter+item+barcode+number&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item circ history</a>"
+      )
+    ),
+    Concat(
+      "Item action log history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3342&phase=Run+this+report&param_name=Enter+item+number&sql_params=",
+        items.itemnumber,
+        "' target='_blank'>see action log history</a>"
+      )
+    ),     
+    Concat(
+      "Item in transit history: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=2784&phase=Run+this+report&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item transit history</a>"
+      )
+    ),
+    Concat(
+      "Request history on this title: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3039&phase=Run+this+report&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=",
+        biblio.biblionumber,
+        "&sql_params=%25' target='_blank'>see title's request history</a>"
+      )
+    ),
+    Concat(
+      "Request history on this item: ",
+      Concat(
+        "<a href='/cgi-bin/koha/reports/guided_reports.pl?reports=3039&phase=Run+this+report&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=%25&sql_params=",
+        items.barcode,
+        "' target='_blank'>see item's request history</a>"
+      )
+    ),
+    '<br /><h3 style="color: white; background-color: #829356; text-align: center;">This item is currently in the catalog</h3>'
+  ) AS INFO
+FROM
+  items JOIN
+  biblio ON items.biblionumber = biblio.biblionumber LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = items.permanent_location LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      items.location LEFT JOIN
+  (SELECT
+     itemtypes.itemtype,
+     itemtypes.description
+   FROM
+     itemtypes) itemtypess ON itemtypess.itemtype = items.itype LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      items.ccode LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = items.notforloan LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = items.damaged LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      items.itemlost LEFT JOIN
+  (SELECT
+     authorised_values.category,
+     authorised_values.authorised_value,
+     authorised_values.lib
+   FROM
+     authorised_values
+   WHERE
+     authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = items.withdrawn JOIN
+  biblio_metadata ON biblio_metadata.biblionumber = biblio.biblionumber
+  LEFT JOIN
+  (SELECT
+     issues.itemnumber,
+     issues.date_due,
+     issues.borrowernumber
+   FROM
+     issues) issuesi ON issuesi.itemnumber = items.itemnumber LEFT JOIN
+  (SELECT
+     branchtransfers.itemnumber,
+     branchtransfers.frombranch,
+     branchtransfers.datesent,
+     branchtransfers.tobranch,
+     branchtransfers.datearrived
+   FROM
+     branchtransfers
+   WHERE
+     branchtransfers.datearrived IS NULL) transfersi ON transfersi.itemnumber =
+      items.itemnumber
+WHERE
+  items.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
+GROUP BY
+  items.itemnumber,
+  biblio.biblionumber
+
+/* UNION joins two reports together - they must have the same number of columns */
+
+UNION
 
 
 
+SELECT
+  CONCAT_WS("<br />",
+    '<h2 style="color: white; background-color: #AD2A1A; text-align: center;">This item has been deleted</h2>',
+    Concat('Home library: ', deleteditems.homebranch),
+    Concat('Current library: ', deleteditems.holdingbranch),
+    Concat('Permanent location: ', deleteditems.permanent_location),
+    Concat('Current location: ', deleteditems.location),
+    Concat('Item type: ', deleteditems.itype),
+    Concat('Collection code: ', ccodes.lib),
+    Concat('Call#: ', deleteditems.itemcallnumber),
+    Concat('Author: ', Coalesce(biblio.author, deletedbiblio.author)),
+    Concat('Title: ', Coalesce(biblio.title, deletedbiblio.title)),
+    Concat('Item barcode: ', deleteditems.barcode),
+    Concat('Replacement price: ', deleteditems.replacementprice),
+    Concat('Item id number: ', deleteditems.itemnumber),
+    Concat(
+      "<br />Damaged status: ",
+      If(
+        deleteditems.damaged = 0,
+        "-",
+        If(
+          deleteditems.damaged IS NULL,
+          "-",
+          damageds.lib
+        )
+      )
+    ),
+    Concat(
+      "Lost status: ",
+      If(
+        deleteditems.itemlost = 0,
+        "-",
+        If(
+          deleteditems.itemlost IS NULL,
+          "-",
+          Concat(losts.lib, " on ", deleteditems.itemlost_on)
+        )
+      )
+    ),
+    Concat(
+      "Withdrawn status: ",
+      If(
+        deleteditems.withdrawn = 0,
+        "-",
+        If(
+          deleteditems.withdrawn IS NULL,
+          "- ",
+          Concat(withdrawns.lib, " on ", deleteditems.withdrawn_on)
+        )
+      )
+    ),
+    Concat(
+      ": ",
+      If(
+        biblio.biblionumber IS NULL,
+        "<br />-- Bibliographic record has been deleted --",
+        Concat(
+          "<br /><a href='/cgi-bin/koha/catalogue/detail.pl?biblionumber=",
+          biblio.biblionumber,
+          "' target='_blank'>Go to the bibliographic record</a>"
+        )
+      )
+    ),
+    Concat(
+      "<br /><a href='/cgi-bin/koha/reports/guided_reports.pl?phase=Run+this+report&reports=3009&sql_params=",
+      Replace(
+        Replace(
+          Replace(
+            Replace(
+              Replace(
+                Replace(
+                  Replace(
+                    deleteditems.barcode,
+                    Char(43),
+                    "%2B"),
+                  Char(47),
+                  "%2F"),
+                Char(32),
+                "%20"),
+              Char(45),
+              "%2D"),
+            Char(36),
+            "%24"),
+          Char(37),
+          "%25"),
+        Char(46),
+        "%2E"
+      ),
+      "&limit=50' target='_blank'>Search payment and fee notes and descriptions for this item barcode number</a>"
+    ),
+    '<br /><h2 style="color: white; background-color: #AD2A1A; text-align: center;">This item was deleted from the catalog<br />within the past 13 months</h2>'
+  ) AS INFO
+FROM
+  deleteditems LEFT JOIN
+  biblio ON deleteditems.biblionumber = biblio.biblionumber LEFT JOIN
+  deletedbiblio ON deletedbiblio.biblionumber = deleteditems.biblionumber
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') permanent_locss ON
+      permanent_locss.authorised_value = deleteditems.permanent_location
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOC') locss ON locss.authorised_value =
+      deleteditems.location LEFT JOIN
+  (SELECT
+      itemtypes.itemtype,
+      itemtypes.description
+    FROM
+      itemtypes) itemtypess ON itemtypess.itemtype = deleteditems.itype
+  LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'CCODE') ccodes ON ccodes.authorised_value =
+      deleteditems.ccode LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'NOT_LOAN') notforloans ON
+      notforloans.authorised_value = deleteditems.notforloan LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'DAMAGED') damageds ON
+      damageds.authorised_value = deleteditems.damaged LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'LOST') losts ON losts.authorised_value =
+      deleteditems.itemlost LEFT JOIN
+  (SELECT
+      authorised_values.category,
+      authorised_values.authorised_value,
+      authorised_values.lib
+    FROM
+      authorised_values
+    WHERE
+      authorised_values.category = 'WITHDRAWN') withdrawns ON
+      withdrawns.authorised_value = deleteditems.withdrawn
+WHERE
+  deleteditems.barcode LIKE Concat('%', <<Enter item barcode number>>, '%')
+GROUP BY
+  deleteditems.itemnumber,
+  biblio.biblionumber
+
+{% endhighlight %}
 
 
+## Conclusion
+
+That's the whole thing.
+
+It's a report that took a long time to create.  Like any truly lazy person, the goal of this report that took dozens of hours to create, was for the sake of saving 2 minutes when someone calls and says "Tell me about barcode number XX."
+
+I have the report saved on my bookmarks toolbar so that when I do get a call saying "Tell me about this book?" I can just click on that bookmark and usually get them an answer in a moment or two.
 
 
-
-
-
+-----
 This work is licensed under a
 [Creative Commons Attribution-ShareAlike 4.0 International License][cc-by-sa].
 
@@ -2608,6 +4127,3 @@ This work is licensed under a
 [cc-by-sa]: http://creativecommons.org/licenses/by-sa/4.0/
 [cc-by-sa-image]: https://licensebuttons.net/l/by-sa/4.0/88x31.png
 [cc-by-sa-shield]: https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg
-
-
-, please check out the video: <a href="" target="_blank"></a>

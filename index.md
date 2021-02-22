@@ -16,6 +16,7 @@ This presentation is a detailed how-to for how to make the "Item dashboard" repo
 <br /><br />
 
 
+-----
 This work is licensed under a
 [Creative Commons Attribution-ShareAlike 4.0 International License][cc-by-sa].
 

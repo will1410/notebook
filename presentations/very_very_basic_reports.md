@@ -5,7 +5,7 @@
 layout: default
 ---
 
-# Very Very Basic Reports for koha
+# Very Very Basic SQL Reports for koha
 
 ## Outside resources
 
